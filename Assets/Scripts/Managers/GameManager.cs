@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
     {
         SetUpLevel(SceneManager.GetSceneByName(sceneName), loadSceneMode);
     }
-
+    // edit this script to remove network obj and transform if its a network obj
     public void CopyAndSendWorldInfo()
     {
         bool w1Open = w1Copy == null ? true : w1Copy.activeSelf;
@@ -110,10 +110,42 @@ public class GameManager : MonoBehaviour
         if (world == 1)
         {
             w1Copy = transferLevel;
-        } else if (world == 2)
+            // Generate a new network object global object ID hash for w1Copy
+            // remove network object (from the copy) if it is a network object
+            Debug.Log(transferLevel.GetComponentsInChildren<NetworkObject>().Length);
+            // get the network object component and destroy it
+            NetworkObject[] networkObjects = transferLevel.GetComponentsInChildren<NetworkObject>();
+            GameObject[] gameObjects = new GameObject[networkObjects.Length];
+
+            for (int i = 0; i < networkObjects.Length; i++)
+            {
+                gameObjects[i] = networkObjects[i].gameObject;
+            }
+            
+            // foreach (NetworkObject no in transferLevel.GetComponentsInChildren<NetworkObject>())
+            // {
+            //     Destroy(no);
+            // }
+            foreach (GameObject go in gameObjects)
+            {
+                Destroy(go.GetComponent<NetworkObject>());
+                //go.AddComponent<NetworkObject>();
+            }
+        }
+        else if (world == 2)
         {
             w2Copy = transferLevel;
+            Destroy(transferLevel.GetComponent<NetworkObject>());
+            transferLevel.AddComponent<NetworkObject>();
+            // Generate a new network object global object ID hash for w2Copy
+            //transferLevel.GetComponent<NetworkObject>().GlobalObjectIdHash = GenerateNewHash();
         }
+    }
+
+    private int GenerateNewHash()
+    {
+        // Generate a new unique hash for the network object global object ID
+        return UnityEngine.Random.Range(1, int.MaxValue);
     }
 
     private void ChangeLayerAndOpacity(GameObject go, int layer)
